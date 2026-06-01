@@ -8,9 +8,10 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f0f0f; font-family: 'Segoe UI', sans-serif; text-align: center; }
     .icon-link { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 16px; cursor: pointer; }
-    .icon-wrap { width: 160px; height: 160px; border-radius: 36px; background: linear-gradient(145deg, #f0ede8, #e0ddd8); border: 4px solid #888; box-shadow: 0 0 0 2px #bbb, 4px 4px 16px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .icon-wrap { width: 160px; height: 160px; border-radius: 36px; overflow: hidden; box-shadow: 0 0 0 2px #bbb, 4px 4px 16px rgba(0,0,0,0.6); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .icon-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .icon-link:hover .icon-wrap { animation: wiggle 0.4s ease; }
-    .icon-link:active .icon-wrap { transform: scale(0.92); box-shadow: 0 0 0 2px #bbb, 2px 2px 8px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.4); }
+    .icon-link:active .icon-wrap { transform: scale(0.92); box-shadow: 0 0 0 2px #bbb, 2px 2px 8px rgba(0,0,0,0.5); }
     @keyframes wiggle {
       0%   { transform: rotate(0deg) scale(1); }
       20%  { transform: rotate(-6deg) scale(1.05); }
@@ -25,34 +26,7 @@
 <body>
   <a class="icon-link" href="https://thelivingplus.com/livcalculator.trial/">
     <div class="icon-wrap">
-      <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-        <polyline points="20,52 60,18 100,52" fill="none" stroke="#444" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
-        <rect x="68" y="22" width="10" height="14" rx="1" fill="#555"/>
-        <rect x="54" y="26" width="7" height="7" rx="1" fill="#c8b89a"/>
-        <rect x="63" y="26" width="7" height="7" rx="1" fill="#c8b89a"/>
-        <rect x="54" y="35" width="7" height="7" rx="1" fill="#c8b89a"/>
-        <rect x="63" y="35" width="7" height="7" rx="1" fill="#c8b89a"/>
-        <text x="60" y="62" text-anchor="middle" font-size="26" font-weight="900" font-family="Arial Black, Arial, sans-serif" fill="#444" stroke="#666" stroke-width="0.5">LIV</text>
-        <rect x="22" y="65" width="52" height="48" rx="6" fill="#333"/>
-        <rect x="27" y="70" width="42" height="14" rx="3" fill="#c8b89a"/>
-        <rect x="27" y="89" width="11" height="10" rx="2" fill="#c8b89a"/>
-        <rect x="41" y="89" width="11" height="10" rx="2" fill="#c8b89a"/>
-        <rect x="55" y="89" width="11" height="10" rx="2" fill="#999"/>
-        <rect x="27" y="102" width="11" height="10" rx="2" fill="#c8b89a"/>
-        <rect x="41" y="102" width="11" height="10" rx="2" fill="#c8b89a"/>
-        <rect x="55" y="102" width="11" height="10" rx="2" fill="#999"/>
-        <text x="32" y="97" text-anchor="middle" font-size="8" fill="#444" font-weight="bold">+</text>
-        <text x="46" y="97" text-anchor="middle" font-size="8" fill="#444" font-weight="bold">-</text>
-        <text x="32" y="110" text-anchor="middle" font-size="8" fill="#444" font-weight="bold">x</text>
-        <text x="46" y="110" text-anchor="middle" font-size="8" fill="#444" font-weight="bold">=</text>
-        <polygon points="65,82 90,68 108,82" fill="#c8b89a" opacity="0.85"/>
-        <polyline points="70,112 70,82 95,112" fill="none" stroke="#c8b89a" stroke-width="2.5" stroke-linejoin="round"/>
-        <rect x="77" y="90" width="6" height="6" rx="1" fill="#888"/>
-        <rect x="86" y="90" width="6" height="6" rx="1" fill="#888"/>
-        <rect x="77" y="99" width="6" height="6" rx="1" fill="#888"/>
-        <rect x="86" y="99" width="6" height="6" rx="1" fill="#888"/>
-        <path d="M15,113 Q60,108 105,113" stroke="#555" stroke-width="2" fill="none"/>
-      </svg>
+      <img src="https://lh3.googleusercontent.com/d/1M3O72hDqeXgit552xoK_Z23VqSWM0KZm" alt="LIV Calculator">
     </div>
     <span class="icon-label">LIV Calculator Trial</span>
   </a>
