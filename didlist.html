@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DID List</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f3f0;--bg2:#ede8e4;--surface:#fff;--surface2:#faf8f6;
+  --border:#e0d8d2;--border2:#cec5bc;
+  --text:#1a0a0a;--text2:#4a2f2f;--muted:#9a8070;--muted2:#c4b0a4;
+  --crimson:#7a1520;--crimson2:#9b1c2a;--crimson3:#5c0f18;
+  --crimson-soft:rgba(122,21,32,0.08);--crimson-mid:rgba(122,21,32,0.15);
+  --green:#2d6a4f;--green-dim:rgba(45,106,79,0.10);
+  --amber:#92400e;--amber-dim:rgba(146,64,14,0.10);
+  --gold:#c8a96e;--gold-dim:rgba(200,169,110,0.15);
+  --radius:14px;--radius-sm:10px;--radius-xs:6px;
+  --font:'Sarabun',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --shadow:0 2px 12px rgba(122,21,32,0.08),0 1px 3px rgba(0,0,0,0.06);
+  --shadow-sm:0 1px 4px rgba(0,0,0,0.07);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+
+/* ── LOADING / AUTH ── */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.screen.active{display:flex}
+
+.login-card{background:var(--surface);border-radius:var(--radius);padding:40px 32px;width:100%;max-width:360px;text-align:center;box-shadow:var(--shadow)}
+.login-logo{font-size:48px;margin-bottom:12px}
+.login-brand{font-size:28px;font-weight:700;color:var(--crimson);letter-spacing:-0.03em;margin-bottom:4px}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.5}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 20px;background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--font);font-size:15px;font-weight:600;color:var(--text);transition:all .15s;box-shadow:var(--shadow-sm)}
+.google-btn:hover{border-color:var(--crimson);box-shadow:var(--shadow)}
+.google-btn img{width:20px;height:20px}
+.login-hint{font-size:11px;color:var(--muted2);margin-top:16px}
+
+/* ── APP LAYOUT ── */
+#appScreen{background:var(--bg);padding:0;align-items:stretch;justify-content:flex-start}
+.app-wrap{display:flex;width:100%;min-height:100vh;max-width:480px;margin:0 auto;flex-direction:column}
+
+/* HEADER */
+.app-header{background:var(--crimson);padding:16px 20px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;flex-shrink:0}
+.header-brand{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.02em}
+.header-brand span{opacity:.45;font-weight:300}
+.header-right{display:flex;align-items:center;gap:10px}
+.header-avatar{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);cursor:pointer;object-fit:cover;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:600}
+.header-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.streak-chip{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);border-radius:20px;padding:4px 10px;font-size:12px;color:#fff;font-weight:600}
+.streak-fire{font-size:14px}
+
+/* NAV TABS */
+.nav-tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-shrink:0}
+.nav-tab{flex:1;padding:12px 4px;border:none;background:none;font-family:var(--font);font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.nav-tab .tab-icon{font-size:18px;line-height:1}
+.nav-tab.active{color:var(--crimson);border-bottom-color:var(--crimson);font-weight:700}
+
+/* CONTENT AREA */
+.content{flex:1;overflow-y:auto;padding-bottom:calc(20px + var(--safe-bottom))}
+
+/* ── INPUT SECTION ── */
+.input-section{padding:16px 16px 8px}
+.input-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px 10px;box-shadow:var(--shadow-sm);transition:border-color .2s}
+.input-card:focus-within{border-color:var(--crimson);box-shadow:var(--shadow)}
+.input-row{display:flex;gap:10px;align-items:flex-end}
+#didInput{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:15px;resize:none;min-height:48px;max-height:120px;line-height:1.6;padding-top:2px}
+#didInput::placeholder{color:var(--muted2)}
+.submit-btn{background:var(--crimson);color:#fff;border:none;border-radius:var(--radius-sm);width:44px;height:44px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,transform .1s}
+.submit-btn:hover{background:var(--crimson2)}
+.submit-btn:active{transform:scale(.93)}
+.submit-btn:disabled{opacity:.4;cursor:not-allowed}
+.input-hints{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.hint-pill{font-size:10px;color:var(--muted);background:var(--bg);border-radius:20px;padding:2px 8px;border:1px solid var(--border)}
+.detected-badges{display:flex;gap:5px;flex-wrap:wrap}
+.det-badge{display:none;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px}
+.det-badge.show{display:flex}
+
+/* ── TODAY STREAK BAR ── */
+.streak-section{padding:12px 16px 4px}
+.streak-bar-card{background:var(--surface);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-sm)}
+.streak-big{font-family:var(--mono);font-size:32px;font-weight:500;color:var(--crimson);line-height:1;flex-shrink:0}
+.streak-info{flex:1}
+.streak-label{font-size:12px;font-weight:600;color:var(--text2)}
+.streak-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.streak-dots{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.streak-dot{width:10px;height:10px;border-radius:50%;background:var(--bg2);transition:background .3s}
+.streak-dot.done{background:var(--crimson)}
+.streak-dot.today{background:var(--crimson);box-shadow:0 0 0 2px rgba(122,21,32,0.25)}
+
+/* ── STATS STRIP ── */
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 16px}
+.stat-mini{background:var(--surface);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;box-shadow:var(--shadow-sm)}
+.stat-mini-val{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--text);line-height:1}
+.stat-mini-label{font-size:10px;color:var(--muted);margin-top:3px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+
+/* ── DID LIST ── */
+.list-section{padding:8px 16px}
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.list-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.search-wrap{position:relative;margin-bottom:10px}
+.search-inp{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 36px 9px 14px;font-family:var(--font);font-size:14px;color:var(--text);outline:none;transition:border-color .2s}
+.search-inp:focus{border-color:var(--crimson)}
+.search-inp::placeholder{color:var(--muted2)}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted2);cursor:pointer;font-size:18px;display:none;line-height:1}
+.search-clear.show{display:block}
+.tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.tag-pill{font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--crimson-soft);color:var(--crimson);border:1px solid var(--crimson-mid);cursor:pointer;transition:all .12s;white-space:nowrap}
+.tag-pill:hover,.tag-pill.active{background:var(--crimson);color:#fff}
+
+.did-items{display:flex;flex-direction:column;gap:8px}
+.did-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;box-shadow:var(--shadow-sm);animation:slideIn .2s ease;transition:border-color .15s}
+.did-card:hover{border-color:var(--border2)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.did-card-top{display:flex;gap:10px;align-items:flex-start}
+.did-check{width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
+.did-body{flex:1;min-width:0}
+.did-text{font-size:14px;color:var(--text);line-height:1.5;margin-bottom:5px;word-break:break-word}
+.did-text.editing{display:none}
+.did-edit-area{width:100%;border:none;border-bottom:1.5px solid var(--crimson);background:none;font-family:var(--font);font-size:14px;color:var(--text);outline:none;resize:none;line-height:1.6;min-height:36px;margin-bottom:6px;display:none}
+.did-edit-area.show,.did-text.editing{display:block}
+.did-edit-btns{display:none;gap:6px;margin-bottom:6px}
+.did-edit-btns.show{display:flex}
+.btn-xs-save{background:var(--green);border:none;border-radius:var(--radius-xs);padding:4px 12px;color:#fff;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer}
+.btn-xs-cancel{background:none;border:1px solid var(--border2);border-radius:var(--radius-xs);padding:4px 10px;color:var(--muted);font-family:var(--font);font-size:12px;cursor:pointer}
+.did-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cat-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;cursor:pointer;border:none;font-family:var(--font);transition:opacity .12s}
+.cat-badge:hover{opacity:.75}
+.time-badge{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.tag-mini{font-family:var(--mono);font-size:10px;color:var(--crimson);font-weight:600;cursor:pointer}
+.tag-mini:hover{text-decoration:underline}
+.did-actions{display:flex;gap:4px;flex-shrink:0}
+.icon-btn{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:16px;padding:2px;opacity:0;transition:opacity .15s,color .15s;line-height:1}
+.did-card:hover .icon-btn{opacity:1}
+.icon-btn:hover{color:var(--crimson)}
+.icon-btn.del:hover{color:#dc2626}
+
+/* CAT PICKER */
+.cat-picker-wrap{position:relative;display:inline-block}
+.cat-dropdown{display:none;position:absolute;top:calc(100%+4px);left:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);box-shadow:var(--shadow);z-index:50;min-width:200px;padding:4px;animation:fadeIn .12s ease}
+.cat-dropdown.open{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.cat-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-xs);cursor:pointer;font-size:13px;color:var(--text);transition:background .1s}
+.cat-opt:hover{background:var(--bg)}
+.cat-opt.selected{background:var(--crimson-soft)}
+.cat-opt-name{font-weight:600}
+
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;opacity:.3;margin-bottom:12px}
+.load-more-btn{width:100%;padding:12px;background:none;border:1.5px dashed var(--border2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;color:var(--muted);cursor:pointer;margin-top:8px;transition:all .15s}
+.load-more-btn:hover{border-color:var(--crimson);color:var(--crimson)}
+
+/* ── ACHIEVEMENTS ── */
+.ach-section{padding:8px 16px}
+.ach-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.ach-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow-sm);transition:all .15s;position:relative;overflow:hidden}
+.ach-card.unlocked{border-color:var(--gold);background:linear-gradient(135deg,#fffdf7,#fff8ec)}
+.ach-card.unlocked::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),#e8c97a)}
+.ach-icon{font-size:28px;margin-bottom:8px;line-height:1;filter:grayscale(1);opacity:.35;transition:all .3s}
+.ach-card.unlocked .ach-icon{filter:none;opacity:1}
+.ach-name{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:3px}
+.ach-card.unlocked .ach-name{color:var(--crimson)}
+.ach-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.ach-progress{margin-top:8px}
+.ach-bar-bg{background:var(--bg2);border-radius:20px;height:4px;overflow:hidden}
+.ach-bar-fill{height:100%;border-radius:20px;background:var(--gold);transition:width .6s ease}
+.ach-card.unlocked .ach-bar-fill{background:linear-gradient(90deg,var(--gold),#e8c97a)}
+.ach-pct{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+.ach-unlocked-date{font-size:10px;color:var(--gold);font-weight:600;margin-top:4px}
+
+/* ── SUMMARY ── */
+.summary-section{padding:8px 16px}
+.summary-period-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px}
+.period-tab{padding:8px 16px;border:none;background:none;font-family:var(--font);font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s}
+.period-tab.active{color:var(--crimson);border-bottom-color:var(--crimson);font-weight:700}
+.summary-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.sum-stat{background:var(--surface);border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow-sm)}
+.sum-stat-val{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--text);line-height:1}
+.sum-stat-label{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.cat-breakdown{background:var(--surface);border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow-sm);margin-bottom:16px}
+.breakdown-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.breakdown-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.breakdown-name{font-size:13px;color:var(--text);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.breakdown-bar-bg{flex:1;background:var(--bg2);border-radius:20px;height:6px;overflow:hidden}
+.breakdown-bar{height:100%;border-radius:20px;transition:width .6s ease}
+.breakdown-cnt{font-family:var(--mono);font-size:11px;color:var(--muted);flex-shrink:0;width:24px;text-align:right}
+.ai-summary-card{background:var(--crimson);border-radius:var(--radius-sm);padding:16px;color:#fff;margin-bottom:16px}
+.ai-summary-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-summary-header h3{font-size:14px;font-weight:700;color:#fff}
+.ai-summary-text{font-size:14px;line-height:1.7;color:rgba(255,255,255,0.92)}
+.ai-summary-text.loading{opacity:.6;font-style:italic}
+.gen-btn{margin-top:10px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:var(--radius-xs);padding:7px 14px;color:#fff;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.gen-btn:hover{background:rgba(255,255,255,0.25)}
+
+/* ── PROFILE DRAWER ── */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(26,10,10,0.55);z-index:100}
+.drawer-overlay.show{display:block}
+.drawer{position:fixed;top:0;right:-320px;width:300px;height:100%;background:var(--surface);box-shadow:-4px 0 24px rgba(0,0,0,0.15);z-index:101;transition:right .25s ease;display:flex;flex-direction:column}
+.drawer.open{right:0}
+.drawer-header{background:var(--crimson);padding:24px 20px;display:flex;align-items:center;gap:14px}
+.drawer-avatar{width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);object-fit:cover;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700}
+.drawer-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.drawer-name{font-size:15px;font-weight:700;color:#fff}
+.drawer-email{font-size:12px;color:rgba(255,255,255,0.65);margin-top:2px}
+.drawer-body{flex:1;padding:20px;overflow-y:auto}
+.drawer-section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.api-key-field{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:8px}
+.api-key-field:focus{border-color:var(--crimson)}
+.drawer-btn{width:100%;padding:11px;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;margin-bottom:8px}
+.drawer-btn.primary{background:var(--crimson);color:#fff}
+.drawer-btn.primary:hover{background:var(--crimson2)}
+.drawer-btn.ghost{background:none;border:1.5px solid var(--border2);color:var(--muted)}
+.drawer-btn.ghost:hover{border-color:var(--crimson);color:var(--crimson)}
+.drawer-footer{padding:16px 20px;border-top:1px solid var(--border)}
+
+/* ── MODALS / TOASTS ── */
+.toast{position:fixed;bottom:calc(20px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;font-size:13px;padding:10px 20px;border-radius:20px;opacity:0;transition:all .3s;z-index:200;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.ai-loading{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.7)}
+.ai-dot{width:5px;height:5px;border-radius:50%;background:#fff;animation:pulse 1.2s ease-in-out infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+/* UTILS */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="screen active" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">✦</div>
+    <div class="login-brand">DID List</div>
+    <div class="login-sub">บันทึกสิ่งที่คุณทำสำเร็จทุกวัน<br>เพราะการลงมือคือทุกอย่าง</div>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      เข้าสู่ระบบด้วย Google
+    </button>
+    <div class="login-hint">ข้อมูลเก็บใน Firestore ของคุณ — ปลอดภัยและซิงค์ข้ามเครื่อง</div>
+  </div>
+</div>
+
+<!-- ── APP SCREEN ── -->
+<div class="screen" id="appScreen">
+  <div class="app-wrap">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="header-brand">DID <span>list</span></div>
+      <div class="header-right">
+        <div class="streak-chip">
+          <span class="streak-fire">🔥</span>
+          <span id="headerStreak">0</span>
+        </div>
+        <div class="header-avatar" id="headerAvatar" onclick="openDrawer()">
+          <span id="headerAvatarText">?</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- NAV TABS -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" id="navHome" onclick="switchView('home')">
+        <span class="tab-icon">✦</span>บันทึก
+      </button>
+      <button class="nav-tab" id="navSummary" onclick="switchView('summary')">
+        <span class="tab-icon">📊</span>สรุป
+      </button>
+      <button class="nav-tab" id="navAchieve" onclick="switchView('achieve')">
+        <span class="tab-icon">🏆</span>รางวัล
+      </button>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- HOME VIEW -->
+      <div id="viewHome">
+        <!-- INPUT -->
+        <div class="input-section">
+          <div class="input-card">
+            <div class="input-row">
+              <textarea id="didInput" placeholder="วันนี้คุณทำอะไรสำเร็จ?&#10;เช่น ประชุมลูกค้า #HL329, วิ่ง 5km, อ่านหนังสือ 30 นาที" rows="2"></textarea>
+              <button class="submit-btn" id="submitBtn" onclick="addDid()">+</button>
+            </div>
+            <div class="input-hints">
+              <div class="detected-badges">
+                <span class="det-badge" id="detCat" style="background:var(--crimson-soft);color:var(--crimson)"></span>
+                <span class="det-badge" id="detTag" style="background:var(--crimson-soft);color:var(--crimson)"></span>
+              </div>
+              <span class="hint-pill">Enter เพื่อบันทึก</span>
+              <span class="hint-pill">#tag เพื่อจัดกลุ่ม</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STREAK BAR -->
+        <div class="streak-section">
+          <div class="streak-bar-card">
+            <div class="streak-big" id="streakNum">0</div>
+            <div class="streak-info">
+              <div class="streak-label" id="streakLabel">วันต่อเนื่อง</div>
+              <div class="streak-sub" id="streakSub">เริ่มบันทึกวันแรกเลย</div>
+              <div class="streak-dots" id="streakDots"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS STRIP -->
+        <div class="stats-strip">
+          <div class="stat-mini">
+            <div class="stat-mini-val" id="statToday">0</div>
+            <div class="stat-mini-label">วันนี้</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-val" id="statMonth">0</div>
+            <div class="stat-mini-label">เดือนนี้</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-val" id="statTotal">0</div>
+            <div class="stat-mini-label">ทั้งหมด</div>
+          </div>
+        </div>
+
+        <!-- DID LIST -->
+        <div class="list-section">
+          <div class="list-header">
+            <span class="list-title" id="listTitle">ล่าสุด</span>
+          </div>
+          <div class="search-wrap">
+            <input class="search-inp" id="searchInp" placeholder="🔍 ค้นหา หรือ #tag..." oninput="onSearch()">
+            <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
+          </div>
+          <div class="tag-row" id="tagRow"></div>
+          <div class="did-items" id="didItems"></div>
+          <div class="empty-state" id="emptyState" style="display:none">
+            <div class="empty-icon">✦</div>
+            <div>ยังไม่มีรายการ<br><small>บันทึกสิ่งที่คุณทำสำเร็จด้านบนได้เลย</small></div>
+          </div>
+          <button class="load-more-btn hidden" id="loadMoreBtn" onclick="loadMore()">โหลดเพิ่มเติม</button>
+        </div>
+      </div>
+
+      <!-- SUMMARY VIEW -->
+      <div id="viewSummary" style="display:none">
+        <div class="summary-section">
+          <div class="summary-period-tabs">
+            <button class="period-tab active" onclick="setPeriod('today',this)">วันนี้</button>
+            <button class="period-tab" onclick="setPeriod('week',this)">สัปดาห์</button>
+            <button class="period-tab" onclick="setPeriod('month',this)">เดือนนี้</button>
+            <button class="period-tab" onclick="setPeriod('year',this)">ปีนี้</button>
+          </div>
+          <div class="summary-stats-grid">
+            <div class="sum-stat">
+              <div class="sum-stat-val" id="sumCount">0</div>
+              <div class="sum-stat-label">กิจกรรม</div>
+            </div>
+            <div class="sum-stat">
+              <div class="sum-stat-val" id="sumCats">0</div>
+              <div class="sum-stat-label">ประเภท</div>
+            </div>
+            <div class="sum-stat">
+              <div class="sum-stat-val" id="sumDays">0</div>
+              <div class="sum-stat-label">วันที่บันทึก</div>
+            </div>
+            <div class="sum-stat">
+              <div class="sum-stat-val" id="sumStreak">0</div>
+              <div class="sum-stat-label">Streak สูงสุด</div>
+            </div>
+          </div>
+          <div class="cat-breakdown">
+            <div class="breakdown-title">แยกตามประเภท</div>
+            <div id="breakdownRows"></div>
+          </div>
+          <div class="ai-summary-card">
+            <div class="ai-summary-header">
+              <span style="font-size:18px">✦</span>
+              <h3>สรุปโดย AI</h3>
+            </div>
+            <div class="ai-summary-text" id="aiSummaryText">กด "สร้างสรุป" เพื่อให้ AI วิเคราะห์กิจกรรมของคุณ</div>
+            <button class="gen-btn" id="genSummaryBtn" onclick="generateSummary()">✦ สร้างสรุป</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACHIEVEMENTS VIEW -->
+      <div id="viewAchieve" style="display:none">
+        <div class="ach-section">
+          <div class="ach-grid" id="achGrid"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div>
+</div>
+
+<!-- PROFILE DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-avatar" id="drawerAvatar"><span id="drawerAvatarText">?</span></div>
+    <div>
+      <div class="drawer-name" id="drawerName">—</div>
+      <div class="drawer-email" id="drawerEmail">—</div>
+    </div>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section-title" style="margin-bottom:8px">Claude API Key</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6">ใส่ key เพื่อให้ AI จำแนกประเภทและสร้างสรุปอัตโนมัติ เก็บใน Firestore ของคุณ</p>
+    <input type="password" class="api-key-field" id="apiKeyField" placeholder="sk-ant-...">
+    <button class="drawer-btn primary" onclick="saveApiKey()">บันทึก API Key</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div class="drawer-section-title" style="margin-bottom:8px">ข้อมูล</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8">
+        บันทึกทั้งหมด: <strong id="drawerTotal">0</strong> รายการ<br>
+        เริ่มใช้เมื่อ: <strong id="drawerSince">—</strong>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="drawer-btn ghost" onclick="signOut()">ออกจากระบบ</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
+  query, orderBy, limit, startAfter, where, getDoc, setDoc, Timestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ════════════════════════════════════════════
+// 🔧 ใส่ Firebase config ของคุณที่นี่
+// ════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyCMsQjdIgT3dXcIJ1yq-OqDaDS9Qcx9iM4",
+  authDomain:        "didlist.firebaseapp.com",
+  projectId:         "didlist",
+  storageBucket:     "didlist.firebasestorage.app",
+  messagingSenderId: "550432146277",
+  appId:             "1:550432146277:web:ead89d55bfcf7c3796978c",
+  measurementId:     "G-T12VD11LLD"
+};
+// ════════════════════════════════════════════
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ── STATE ──
+let currentUser = null;
+let apiKey = '';
+let dids = [];
+let lastDoc = null;
+let hasMore = false;
+const PAGE = 20;
+let searchQ = '';
+let activeTag = null;
+let currentPeriod = 'today';
+let currentView = 'home';
+const TODAY = () => new Date().toISOString().split('T')[0];
+
+// ── ACHIEVEMENTS DEF ──
+const ACHIEVEMENTS = [
+  { id:'first',    icon:'🌱', name:'ก้าวแรก',       desc:'บันทึกครั้งแรก',              target:1,   field:'total' },
+  { id:'ten',      icon:'⚡', name:'10 ครั้ง',       desc:'บันทึกสำเร็จ 10 ครั้ง',       target:10,  field:'total' },
+  { id:'fifty',    icon:'🔥', name:'50 ครั้ง',       desc:'บันทึกสำเร็จ 50 ครั้ง',       target:50,  field:'total' },
+  { id:'hundred',  icon:'💯', name:'100 ครั้ง',      desc:'บันทึกสำเร็จ 100 ครั้ง',      target:100, field:'total' },
+  { id:'fiveh',    icon:'🚀', name:'500 ครั้ง',      desc:'บันทึกสำเร็จ 500 ครั้ง',      target:500, field:'total' },
+  { id:'thousand', icon:'👑', name:'1,000 ครั้ง',   desc:'บันทึกสำเร็จ 1,000 ครั้ง',    target:1000,field:'total' },
+  { id:'streak7',  icon:'📅', name:'7 วันต่อเนื่อง', desc:'บันทึกทุกวัน 7 วันติดต่อกัน', target:7,   field:'streak' },
+  { id:'streak30', icon:'🏅', name:'30 วัน',         desc:'บันทึกทุกวัน 30 วันติดต่อกัน',target:30,  field:'streak' },
+  { id:'streak100',icon:'🌟', name:'100 วัน',        desc:'นักบันทึกตัวยง 100 วัน',       target:100, field:'streak' },
+  { id:'streak365',icon:'🏆', name:'1 ปีเต็ม',       desc:'บันทึกครบ 365 วันต่อเนื่อง',  target:365, field:'streak' },
+];
+
+// ── AUTH ──
+window.signInWithGoogle = async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) { showToast('เข้าสู่ระบบไม่สำเร็จ: '+e.message); }
+};
+
+window.signOut = async () => {
+  await fbSignOut(auth);
+  dids=[]; currentUser=null;
+  document.getElementById('loginScreen').classList.add('active');
+  document.getElementById('appScreen').classList.remove('active');
+  closeDrawer();
+};
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('appScreen').classList.add('active');
+    updateUserUI();
+    await loadUserMeta();
+    await loadDids();
+    renderAll();
+  } else {
+    document.getElementById('loginScreen').classList.add('active');
+    document.getElementById('appScreen').classList.remove('active');
+  }
+});
+
+function userRef()  { return doc(db, 'users', currentUser.uid); }
+function didsCol()  { return collection(db, 'users', currentUser.uid, 'dids'); }
+
+async function loadUserMeta() {
+  try {
+    const snap = await getDoc(userRef());
+    if (snap.exists()) {
+      const d = snap.data();
+      apiKey = d.apiKey || '';
+      document.getElementById('apiKeyField').value = apiKey ? '••••••••' : '';
+    } else {
+      await setDoc(userRef(), { createdAt: Timestamp.now(), total: 0 });
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function loadDids(loadMore=false) {
+  try {
+    let q = query(didsCol(), orderBy('createdAt','desc'), limit(PAGE));
+    if (loadMore && lastDoc) q = query(didsCol(), orderBy('createdAt','desc'), startAfter(lastDoc), limit(PAGE));
+    const snap = await getDocs(q);
+    const items = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    if (loadMore) dids = [...dids, ...items];
+    else dids = items;
+    lastDoc = snap.docs[snap.docs.length-1] || null;
+    hasMore = snap.docs.length === PAGE;
+    document.getElementById('loadMoreBtn').classList.toggle('hidden', !hasMore);
+  } catch(e) { console.error(e); }
+}
+
+window.loadMore = async () => { await loadDids(true); renderItems(); };
+
+// ── META UPDATE ──
+async function updateMeta(delta=1) {
+  try {
+    const snap = await getDoc(userRef());
+    const prev = snap.exists() ? (snap.data().total||0) : 0;
+    const newTotal = prev + delta;
+    const streak = calcStreak();
+    await setDoc(userRef(), { total:newTotal, streak, lastUpdated:Timestamp.now() }, { merge:true });
+    checkAchievements(newTotal, streak);
+  } catch(e) {}
+}
+
+// ── ADD DID ──
+window.addDid = async () => {
+  const inp = document.getElementById('didInput');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  const tags = extractTags(text);
+  let category = fallbackClassify(text);
+
+  const item = {
+    text, tags, category,
+    createdAt: Timestamp.now(),
+    dateStr: TODAY()
+  };
+
+  // AI classify async — update after save
+  if (apiKey) {
+    classifyAI(text).then(async cat => {
+      if (cat && cat !== category) {
+        const saved = dids[0];
+        if (saved) {
+          saved.category = cat;
+          try { await updateDoc(doc(didsCol(), saved.id), { category:cat }); renderItems(); } catch {}
+        }
+      }
+    }).catch(()=>{});
+  }
+
+  try {
+    const ref = await addDoc(didsCol(), item);
+    dids.unshift({ id:ref.id, ...item });
+    await updateMeta(1);
+    renderAll();
+    inp.value = '';
+    document.getElementById('detCat').classList.remove('show');
+    document.getElementById('detTag').classList.remove('show');
+    showToast('✓ บันทึกแล้ว');
+    // switch to home if not there
+    if (currentView !== 'home') switchView('home');
+  } catch(e) { showToast('เกิดข้อผิดพลาด'); }
+
+  btn.disabled = false;
+  btn.textContent = '+';
+  inp.focus();
+};
+
+// ── DELETE / EDIT ──
+window.deleteDid = async (id) => {
+  if (!confirm('ลบรายการนี้?')) return;
+  try {
+    await deleteDoc(doc(didsCol(), id));
+    dids = dids.filter(d=>d.id!==id);
+    await updateMeta(-1);
+    renderAll();
+    showToast('ลบแล้ว');
+  } catch(e) { showToast('ลบไม่สำเร็จ'); }
+};
+
+window.startEditDid = (id) => {
+  const card = document.getElementById('dc-'+id);
+  if (!card) return;
+  card.querySelector('.did-text').classList.add('editing');
+  card.querySelector('.did-edit-area').classList.add('show');
+  card.querySelector('.did-edit-btns').classList.add('show');
+  const ta = card.querySelector('.did-edit-area');
+  ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length);
+};
+
+window.cancelEditDid = (id) => {
+  const card = document.getElementById('dc-'+id);
+  if (!card) return;
+  card.querySelector('.did-text').classList.remove('editing');
+  card.querySelector('.did-edit-area').classList.remove('show');
+  card.querySelector('.did-edit-btns').classList.remove('show');
+};
+
+window.saveEditDid = async (id) => {
+  const card = document.getElementById('dc-'+id);
+  if (!card) return;
+  const newText = card.querySelector('.did-edit-area').value.trim();
+  if (!newText) return;
+  const item = dids.find(d=>d.id===id);
+  if (!item) return;
+  const newTags = [...new Set([...(item.tags||[]),...extractTags(newText)])];
+  const newCat = apiKey ? (await classifyAI(newText).catch(()=>item.category)) : fallbackClassify(newText);
+  try {
+    await updateDoc(doc(didsCol(), id), { text:newText, tags:newTags, category:newCat });
+    item.text=newText; item.tags=newTags; item.category=newCat;
+    renderItems(); showToast('แก้ไขแล้ว');
+  } catch(e) { showToast('แก้ไขไม่สำเร็จ'); }
+};
+
+window.changeCat = async (id, cat) => {
+  try {
+    await updateDoc(doc(didsCol(), id), { category:cat });
+    const item = dids.find(d=>d.id===id);
+    if (item) item.category = cat;
+    renderItems();
+  } catch(e) {}
+};
+
+// ── CLASSIFY ──
+const CAT_COLORS = {
+  default: { color:'#6b7280', bg:'rgba(107,114,128,0.10)' }
+};
+const catColorMap = {};
+const COLOR_POOL = [
+  {color:'#1d4ed8',bg:'rgba(29,78,216,0.10)'},
+  {color:'#15803d',bg:'rgba(21,128,61,0.10)'},
+  {color:'#7c3aed',bg:'rgba(124,58,237,0.10)'},
+  {color:'#be185d',bg:'rgba(190,24,93,0.10)'},
+  {color:'#0e7490',bg:'rgba(14,116,144,0.10)'},
+  {color:'#b45309',bg:'rgba(180,83,9,0.10)'},
+  {color:'#c2410c',bg:'rgba(194,65,12,0.10)'},
+  {color:'#0f766e',bg:'rgba(15,118,110,0.10)'},
+  {color:'#6d28d9',bg:'rgba(109,40,217,0.10)'},
+  {color:'#9f1239',bg:'rgba(159,18,57,0.10)'},
+];
+let colorIdx = 0;
+
+function getCatStyle(cat) {
+  if (!cat) return CAT_COLORS.default;
+  if (!catColorMap[cat]) {
+    catColorMap[cat] = COLOR_POOL[colorIdx % COLOR_POOL.length];
+    colorIdx++;
+  }
+  return catColorMap[cat];
+}
+
+const KW = {
+  'การเงิน':['โอน','จ่าย','ลงทุน','หุ้น','ออม','บัญชี','ภาษี','ประกัน','เงิน','budget','กำไร','รายได้','ค่าใช้จ่าย'],
+  'งาน':['ประชุม','meeting','report','โปรเจค','client','ลูกค้า','email','ส่งงาน','deadline','สัญญา','บริษัท','ขาย','sale','ทำงาน','office','นัด'],
+  'สุขภาพ':['วิ่ง','gym','ออกกำลัง','yoga','ว่าย','ปั่น','เดิน','กีฬา','หมอ','นอน','ยา','ตรวจ','อาหาร','ลดน้ำหนัก','นวด'],
+  'พัฒนาตัวเอง':['อ่าน','เรียน','คอร์ส','course','ฝึก','ศึกษา','podcast','หนังสือ','สัมมนา','ทักษะ'],
+  'จิตวิญญาณ':['สมาธิ','meditation','ธรรม','บริจาค','วัด','ภาวนา','สวดมนต์','ให้ทาน'],
+  'ความสัมพันธ์':['ครอบครัว','เพื่อน','แฟน','กินข้าว','ดูหนัง','เที่ยว','คุย','พบ','พ่อ','แม่','ลูก'],
+};
+
+function fallbackClassify(text) {
+  const t = text.toLowerCase();
+  for (const [cat,kws] of Object.entries(KW)) {
+    if (kws.some(k=>t.includes(k))) return cat;
+  }
+  return 'ทั่วไป';
+}
+
+async function classifyAI(text) {
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6', max_tokens:30,
+      system:`คุณจำแนกกิจกรรมเป็นหมวดหมู่ภาษาไทยสั้นๆ 1-3 คำ เช่น "งาน", "ออกกำลังกาย", "อ่านหนังสือ", "การเงิน", "ครอบครัว", "สุขภาพ", "เรียนรู้" ฯลฯ
+ตอบเฉพาะชื่อหมวดเท่านั้น ไม่มีคำอื่น ไม่มีเครื่องหมาย ให้อิสระในการตั้งชื่อหมวดตามความเหมาะสม`,
+      messages:[{role:'user',content:text}]
+    })
+  });
+  if (!res.ok) throw new Error();
+  const data = await res.json();
+  return (data.content?.[0]?.text||'').trim().substring(0,20) || null;
+}
+
+// ── TAGS ──
+function extractTags(text) {
+  const m = text.match(/#[\w\u0E00-\u0E7F]+/g)||[];
+  return [...new Set(m.map(t=>t.toLowerCase()))];
+}
+
+function allTagsFromLoaded() {
+  const set = new Set();
+  dids.forEach(d=>(d.tags||[]).forEach(t=>set.add(t)));
+  return [...set].sort();
+}
+
+// ── STREAK ──
+function calcStreak() {
+  const dates = [...new Set(dids.map(d=>d.dateStr||''))].filter(Boolean).sort().reverse();
+  if (!dates.length) return 0;
+  const today = TODAY();
+  const yesterday = new Date(Date.now()-86400000).toISOString().split('T')[0];
+  if (dates[0]!==today && dates[0]!==yesterday) return 0;
+  let streak=1;
+  for(let i=1;i<dates.length;i++){
+    const diff=(new Date(dates[i-1])-new Date(dates[i]))/86400000;
+    if(diff===1)streak++; else break;
+  }
+  return streak;
+}
+
+// ── ACHIEVEMENTS ──
+let unlockedAchs = JSON.parse(localStorage.getItem('dl_ach')||'{}');
+
+function checkAchievements(total, streak) {
+  let newUnlock = false;
+  ACHIEVEMENTS.forEach(ach => {
+    if (unlockedAchs[ach.id]) return;
+    const val = ach.field==='total' ? total : streak;
+    if (val >= ach.target) {
+      unlockedAchs[ach.id] = new Date().toLocaleDateString('th-TH');
+      newUnlock = true;
+      setTimeout(()=>showToast(`🏆 ปลดล็อค: ${ach.name}!`), 500);
+    }
+  });
+  if (newUnlock) {
+    localStorage.setItem('dl_ach', JSON.stringify(unlockedAchs));
+    if (currentView==='achieve') renderAchievements();
+  }
+}
+
+function renderAchievements() {
+  const total = dids.length;
+  const streak = calcStreak();
+  const grid = document.getElementById('achGrid');
+  grid.innerHTML = ACHIEVEMENTS.map(ach => {
+    const val = ach.field==='total' ? total : streak;
+    const pct = Math.min(100, Math.round(val/ach.target*100));
+    const unlocked = !!unlockedAchs[ach.id];
+    return `<div class="ach-card${unlocked?' unlocked':''}">
+      <div class="ach-icon">${ach.icon}</div>
+      <div class="ach-name">${ach.name}</div>
+      <div class="ach-desc">${ach.desc}</div>
+      <div class="ach-progress">
+        <div class="ach-bar-bg"><div class="ach-bar-fill" style="width:${pct}%"></div></div>
+        <div class="ach-pct">${unlocked?'✓ สำเร็จ':`${val.toLocaleString()} / ${ach.target.toLocaleString()}`}</div>
+        ${unlocked&&unlockedAchs[ach.id]?`<div class="ach-unlocked-date">🏆 ${unlockedAchs[ach.id]}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── SUMMARY ──
+window.setPeriod = (period, btn) => {
+  currentPeriod = period;
+  document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('aiSummaryText').textContent = 'กด "สร้างสรุป" เพื่อให้ AI วิเคราะห์กิจกรรมของคุณ';
+  renderSummary();
+};
+
+function getPeriodDids() {
+  const now = new Date();
+  const today = TODAY();
+  const y = now.getFullYear(), m = now.getMonth();
+  return dids.filter(d => {
+    const ds = d.dateStr || '';
+    if (currentPeriod==='today') return ds===today;
+    if (currentPeriod==='week') {
+      const start = new Date(now); start.setDate(now.getDate()-6);
+      return ds >= start.toISOString().split('T')[0];
+    }
+    if (currentPeriod==='month') return ds.startsWith(`${y}-${String(m+1).padStart(2,'0')}`);
+    if (currentPeriod==='year') return ds.startsWith(`${y}`);
+    return true;
+  });
+}
+
+function renderSummary() {
+  const items = getPeriodDids();
+  const days = new Set(items.map(d=>d.dateStr)).size;
+  const cats = {};
+  items.forEach(d=>{ const c=d.category||'ทั่วไป'; cats[c]=(cats[c]||0)+1; });
+  const streak = calcStreak();
+  const maxStreak = streak; // simplified — could track historical max
+
+  document.getElementById('sumCount').textContent = items.length;
+  document.getElementById('sumCats').textContent = Object.keys(cats).length;
+  document.getElementById('sumDays').textContent = days;
+  document.getElementById('sumStreak').textContent = streak;
+
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const max = Math.max(...Object.values(cats),1);
+  document.getElementById('breakdownRows').innerHTML = sorted.map(([cat,cnt])=>{
+    const s = getCatStyle(cat);
+    return `<div class="breakdown-row">
+      <span class="breakdown-name" style="color:${s.color}">${cat}</span>
+      <div class="breakdown-bar-bg"><div class="breakdown-bar" style="width:${Math.round(cnt/max*100)}%;background:${s.color}"></div></div>
+      <span class="breakdown-cnt">${cnt}</span>
+    </div>`;
+  }).join('') || '<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">ยังไม่มีข้อมูลในช่วงนี้</div>';
+}
+
+window.generateSummary = async () => {
+  if (!apiKey) { showToast('กรุณาใส่ Claude API Key ก่อน'); openDrawer(); return; }
+  const items = getPeriodDids();
+  if (!items.length) { showToast('ยังไม่มีข้อมูลในช่วงเวลานี้'); return; }
+
+  const btn = document.getElementById('genSummaryBtn');
+  const textEl = document.getElementById('aiSummaryText');
+  btn.disabled = true;
+  textEl.innerHTML = '<div class="ai-loading"><span class="ai-dot"></span><span class="ai-dot"></span><span class="ai-dot"></span> AI กำลังวิเคราะห์...</div>';
+
+  const periodName = {today:'วันนี้',week:'สัปดาห์นี้',month:'เดือนนี้',year:'ปีนี้'}[currentPeriod];
+  const listText = items.slice(0,50).map(d=>`- ${d.text} (${d.category||'ทั่วไป'})`).join('\n');
+  const streak = calcStreak();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:300,
+        system:`คุณเป็น AI ที่ช่วยสรุปกิจกรรมที่ผู้ใช้ทำสำเร็จ สรุปเป็นภาษาไทยที่อบอุ่น กระชับ และให้กำลังใจ ไม่เกิน 4-5 ประโยค ไม่ต้องขึ้นหัวข้อ พูดถึงสิ่งที่ทำได้ดี แนวโน้มที่น่าสนใจ และให้กำลังใจต่อไป`,
+        messages:[{role:'user',content:`${periodName} (streak ${streak} วัน) ฉันทำสิ่งเหล่านี้สำเร็จ ${items.length} รายการ:\n${listText}`}]
+      })
+    });
+    const data = await res.json();
+    const txt = data.content?.[0]?.text||'ไม่สามารถสร้างสรุปได้';
+    textEl.textContent = txt;
+    textEl.classList.remove('loading');
+  } catch(e) {
+    textEl.textContent = 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+  }
+  btn.disabled = false;
+};
+
+// ── RENDER ──
+function renderAll() {
+  renderStreak();
+  renderStats();
+  renderItems();
+  if (currentView==='achieve') renderAchievements();
+  if (currentView==='summary') renderSummary();
+}
+
+function renderStreak() {
+  const streak = calcStreak();
+  document.getElementById('streakNum').textContent = streak;
+  document.getElementById('headerStreak').textContent = streak;
+
+  if (streak===0) {
+    document.getElementById('streakLabel').textContent = 'วันต่อเนื่อง';
+    document.getElementById('streakSub').textContent = 'เริ่มบันทึกวันแรกเลย';
+  } else if (streak>=100) {
+    document.getElementById('streakLabel').textContent = `🌟 ${streak} วันต่อเนื่อง`;
+    document.getElementById('streakSub').textContent = 'ยอดเยี่ยมมากคุณทำได้!';
+  } else if (streak>=30) {
+    document.getElementById('streakLabel').textContent = `🏅 ${streak} วันต่อเนื่อง`;
+    document.getElementById('streakSub').textContent = 'คุณคือนักบันทึกตัวยง!';
+  } else if (streak>=7) {
+    document.getElementById('streakLabel').textContent = `🔥 ${streak} วันต่อเนื่อง`;
+    document.getElementById('streakSub').textContent = 'สุดยอด! ทำต่อไป';
+  } else {
+    document.getElementById('streakLabel').textContent = `${streak} วันต่อเนื่อง`;
+    document.getElementById('streakSub').textContent = streak>=3 ? 'กำลังสร้างนิสัยที่ดี!' : 'เริ่มต้นได้แล้ว ทำต่อไป!';
+  }
+
+  // dots — last 14 days
+  const dates = new Set(dids.map(d=>d.dateStr));
+  const dots = document.getElementById('streakDots');
+  dots.innerHTML = '';
+  for (let i=13;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.toISOString().split('T')[0];
+    const div = document.createElement('div');
+    div.className = 'streak-dot' + (dates.has(ds)?' done':'') + (ds===TODAY()?' today':'');
+    dots.appendChild(div);
+  }
+}
+
+function renderStats() {
+  const today = TODAY();
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('statToday').textContent = dids.filter(d=>d.dateStr===today).length;
+  document.getElementById('statMonth').textContent = dids.filter(d=>(d.dateStr||'').startsWith(ym)).length;
+  document.getElementById('statTotal').textContent = dids.length;
+
+  // drawer
+  document.getElementById('drawerTotal').textContent = dids.length.toLocaleString();
+  const oldest = dids.length ? dids[dids.length-1] : null;
+  if (oldest?.createdAt) {
+    const d = oldest.createdAt.toDate ? oldest.createdAt.toDate() : new Date(oldest.createdAt);
+    document.getElementById('drawerSince').textContent = d.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+  }
+}
+
+function getFilteredDids() {
+  let items = dids;
+  if (activeTag) items = items.filter(d=>(d.tags||[]).includes(activeTag));
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    if (q.startsWith('#')) items = items.filter(d=>(d.tags||[]).some(t=>t.includes(q)));
+    else items = items.filter(d=>(d.text||'').toLowerCase().includes(q)||(d.tags||[]).some(t=>t.includes(q)));
+  }
+  return items;
+}
+
+function renderItems() {
+  const items = getFilteredDids();
+  const container = document.getElementById('didItems');
+  const empty = document.getElementById('emptyState');
+
+  // tag row
+  const tags = allTagsFromLoaded();
+  const tagRow = document.getElementById('tagRow');
+  if (tags.length) {
+    tagRow.innerHTML = tags.map(t=>
+      `<span class="tag-pill${activeTag===t?' active':''}" onclick="toggleTag('${t}')">${t}</span>`
+    ).join('');
+  } else tagRow.innerHTML='';
+
+  if (!items.length) { container.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  container.innerHTML = items.map(item=>{
+    const s = getCatStyle(item.category||'ทั่วไป');
+    const timeStr = item.createdAt?.toDate
+      ? item.createdAt.toDate().toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit'})
+      : '';
+    const tagHtml = (item.tags||[]).map(t=>
+      `<span class="tag-mini" onclick="toggleTag('${t}')">${t}</span>`
+    ).join('');
+    const highlighted = escHtml(item.text).replace(/#([\w\u0E00-\u0E7F]+)/g,
+      '<span style="color:var(--crimson);font-weight:700">#$1</span>');
+
+    return `<div class="did-card" id="dc-${item.id}">
+      <div class="did-card-top">
+        <div class="did-check">✓</div>
+        <div class="did-body">
+          <div class="did-text">${highlighted}</div>
+          <textarea class="did-edit-area" rows="2" onkeydown="if(event.key==='Escape')cancelEditDid('${item.id}')">${escHtml(item.text)}</textarea>
+          <div class="did-edit-btns">
+            <button class="btn-xs-save" onclick="saveEditDid('${item.id}')">บันทึก</button>
+            <button class="btn-xs-cancel" onclick="cancelEditDid('${item.id}')">ยกเลิก</button>
+          </div>
+          <div class="did-meta">
+            <div class="cat-picker-wrap">
+              <button class="cat-badge" style="background:${s.bg};color:${s.color}"
+                onclick="event.stopPropagation();toggleCatPicker(this)">${item.category||'ทั่วไป'}</button>
+              <div class="cat-dropdown">${buildCatOptions(item.id, item.category)}</div>
+            </div>
+            ${timeStr?`<span class="time-badge">${timeStr}</span>`:''}
+            ${tagHtml}
+          </div>
+        </div>
+        <div class="did-actions">
+          <button class="icon-btn" onclick="startEditDid('${item.id}')" title="แก้ไข">✎</button>
+          <button class="icon-btn del" onclick="deleteDid('${item.id}')" title="ลบ">×</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildCatOptions(id, currentCat) {
+  const cats = [...new Set(dids.map(d=>d.category||'ทั่วไป').filter(Boolean))];
+  const extras = ['การเงิน','งาน','สุขภาพ','พัฒนาตัวเอง','จิตวิญญาณ','ความสัมพันธ์','ทั่วไป'];
+  const all = [...new Set([...cats,...extras])].sort();
+  return all.map(cat=>{
+    const s = getCatStyle(cat);
+    return `<div class="cat-opt${cat===currentCat?' selected':''}"
+      onclick="event.stopPropagation();document.querySelectorAll('.cat-dropdown').forEach(d=>d.classList.remove('open'));changeCat('${id}','${cat}')">
+      <span class="cat-opt-name" style="color:${s.color}">${cat}</span>
+    </div>`;
+  }).join('');
+}
+
+window.toggleCatPicker = (btn) => {
+  document.querySelectorAll('.cat-dropdown.open').forEach(d=>{
+    if(d!==btn.nextElementSibling) d.classList.remove('open');
+  });
+  btn.nextElementSibling.classList.toggle('open');
+};
+
+document.addEventListener('click', ()=>document.querySelectorAll('.cat-dropdown.open').forEach(d=>d.classList.remove('open')));
+
+// ── SEARCH / FILTER ──
+window.onSearch = () => {
+  const val = document.getElementById('searchInp').value;
+  searchQ = val.trim(); activeTag=null;
+  document.getElementById('searchClear').classList.toggle('show', !!val);
+  renderItems();
+};
+window.clearSearch = () => {
+  document.getElementById('searchInp').value='';
+  searchQ=''; activeTag=null;
+  document.getElementById('searchClear').classList.remove('show');
+  renderItems();
+};
+window.toggleTag = (tag) => {
+  activeTag = activeTag===tag ? null : tag;
+  searchQ=''; document.getElementById('searchInp').value='';
+  renderItems();
+};
+
+// ── SWITCH VIEW ──
+window.switchView = (view) => {
+  currentView = view;
+  ['home','summary','achieve'].forEach(v=>{
+    document.getElementById(`view${v.charAt(0).toUpperCase()+v.slice(1)}`).style.display=v===view?'':'none';
+    document.getElementById(`nav${v.charAt(0).toUpperCase()+v.slice(1)}`).classList.toggle('active',v===view);
+  });
+  if (view==='summary') renderSummary();
+  if (view==='achieve') renderAchievements();
+};
+
+// ── DRAWER ──
+window.openDrawer = () => {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('show');
+};
+window.closeDrawer = () => {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('show');
+};
+window.saveApiKey = async () => {
+  const val = document.getElementById('apiKeyField').value.trim();
+  if (!val || val==='••••••••') { showToast('กรุณาใส่ API Key'); return; }
+  try {
+    await setDoc(userRef(), { apiKey:val }, { merge:true });
+    apiKey = val;
+    showToast('✓ บันทึก API Key แล้ว');
+    document.getElementById('apiKeyField').value='••••••••';
+  } catch(e) { showToast('บันทึกไม่สำเร็จ'); }
+};
+
+// ── USER UI ──
+function updateUserUI() {
+  const u = currentUser;
+  const name = u.displayName||'ผู้ใช้';
+  const initials = name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('headerAvatarText').textContent = initials;
+  document.getElementById('drawerAvatarText').textContent = initials;
+  document.getElementById('drawerName').textContent = name;
+  document.getElementById('drawerEmail').textContent = u.email||'';
+  if (u.photoURL) {
+    document.getElementById('headerAvatar').innerHTML = `<img src="${u.photoURL}" onerror="this.parentElement.innerHTML='${initials}'">`;
+    document.getElementById('drawerAvatar').innerHTML = `<img src="${u.photoURL}" onerror="this.parentElement.innerHTML='${initials}'">`;
+  }
+}
+
+// ── INPUT LIVE DETECT ──
+document.getElementById('didInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();addDid();}
+});
+document.getElementById('didInput').addEventListener('input', debounce(()=>{
+  const text = document.getElementById('didInput').value;
+  const cat = text.trim().length>2 ? fallbackClassify(text) : null;
+  const catEl = document.getElementById('detCat');
+  if(cat && cat!=='ทั่วไป'){
+    const s=getCatStyle(cat);
+    catEl.style.background=s.bg; catEl.style.color=s.color;
+    catEl.textContent=cat; catEl.classList.add('show');
+  } else catEl.classList.remove('show');
+
+  const tags = extractTags(text);
+  const tagEl = document.getElementById('detTag');
+  if(tags.length){ tagEl.textContent=tags.join(' '); tagEl.classList.add('show'); }
+  else tagEl.classList.remove('show');
+}, 200));
+
+// ── TOAST ──
+function showToast(msg, ms=2500) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+</script>
+</body>
+</html>
