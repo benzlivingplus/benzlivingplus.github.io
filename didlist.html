@@ -714,18 +714,19 @@ async function classifyAI(text) {
     method:'POST',
     headers:{
       'Content-Type':'application/json',
-      'x-api-key':apiKey,
+      'x-api-key':apiKey.trim(),
       'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'
     },
     body:JSON.stringify({
-      model:'claude-sonnet-4-6', max_tokens:30,
+      model:'claude-sonnet-4-6',
+      max_tokens:50,
       system:`คุณจำแนกกิจกรรมเป็นหมวดหมู่ภาษาไทยสั้นๆ 1-3 คำ เช่น "งาน", "ออกกำลังกาย", "อ่านหนังสือ", "การเงิน", "ครอบครัว", "สุขภาพ", "เรียนรู้" ฯลฯ
 ตอบเฉพาะชื่อหมวดเท่านั้น ไม่มีคำอื่น ไม่มีเครื่องหมาย ให้อิสระในการตั้งชื่อหมวดตามความเหมาะสม`,
       messages:[{role:'user',content:text}]
     })
   });
-  if (!res.ok) throw new Error();
+  if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||res.status); }
   const data = await res.json();
   return (data.content?.[0]?.text||'').trim().substring(0,20) || null;
 }
@@ -868,22 +869,24 @@ window.generateSummary = async () => {
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'x-api-key':apiKey,
+        'x-api-key':apiKey.trim(),
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6', max_tokens:300,
+        model:'claude-sonnet-4-6',
+        max_tokens:1024,
         system:`คุณเป็น AI ที่ช่วยสรุปกิจกรรมที่ผู้ใช้ทำสำเร็จ สรุปเป็นภาษาไทยที่อบอุ่น กระชับ และให้กำลังใจ ไม่เกิน 4-5 ประโยค ไม่ต้องขึ้นหัวข้อ พูดถึงสิ่งที่ทำได้ดี แนวโน้มที่น่าสนใจ และให้กำลังใจต่อไป`,
         messages:[{role:'user',content:`${periodName} (streak ${streak} วัน) ฉันทำสิ่งเหล่านี้สำเร็จ ${items.length} รายการ:\n${listText}`}]
       })
     });
     const data = await res.json();
+    if (data.error) { textEl.textContent = 'Error: '+data.error.message; btn.disabled=false; return; }
     const txt = data.content?.[0]?.text||'ไม่สามารถสร้างสรุปได้';
     textEl.textContent = txt;
     textEl.classList.remove('loading');
   } catch(e) {
-    textEl.textContent = 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+    textEl.textContent = 'เกิดข้อผิดพลาด: '+e.message;
   }
   btn.disabled = false;
 };
